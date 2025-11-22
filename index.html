@@ -1,66 +1,283 @@
-<!DOCTYPE html>
 <html>
 <head>
   <title>After School Classes</title>
   <script src="https://unpkg.com/vue@2.7.8/dist/vue.js"></script>
-  <link rel="stylesheet" href="styles.css">
+  <script type="text/javascript" src="lessons.js"></script>
+  <link href="https://cdn.jsdelivr.net/npm/font-awesome-bundled@6.7.2/all.min.css" rel="stylesheet">
+  <link rel="stylesheet" type="text/css" href="styles.css">
 </head>
-
 <body>
   <div id="app">
-
     <header>
       <h1>After School Classes</h1>
-      <button class="checkout-btn">
-        0 <span class="cart-icon"></span>
+      <button class="checkout-btn" v-on:click="toggleCheckout">
+        <span>{{ cartItemCount }}</span>
+        <span class="fa-solid fa-cart-shopping"></span>
+        <span>Checkout</span>
       </button>
     </header>
 
     <main>
-      <div class="container">
-
-        <!-- LEFT SIDEBAR -->
-        <div class="sidebar">
-          <h2>Search</h2>
-          <input type="text" class="search-box" placeholder="Search by subject or location">
-
-          <h2>Sort By</h2>
-          <label><input type="radio"> Subject</label>
-          <label><input type="radio"> Location</label>
-          <label><input type="radio"> Price</label>
-          <label><input type="radio"> Spaces</label>
-        </div>
-
-        <!-- RIGHT CONTENT: SAMPLE CARD -->
-        <div class="content">
-          <div class="cards-grid">
-
-            <!-- ⭐ Sample static card -->
-            <div class="card">
-              <div class="card-header">
-                <div class="card-info">
-                  <div><strong>Subject:</strong> Basketball</div>
-                  <div><strong>Location:</strong> Dubai</div>
-                  <div><strong>Price:</strong> £120</div>
-                  <div><strong>Spaces:</strong> 5</div>
+      
+          <div class="content">
+            <div class="cards-grid">
+              <div v-for="product in sortedProducts" class="card">
+                <div class="card-header">
+                  <div class="card-info">
+                    <div><strong>Subject:</strong> {{ product.subject }}</div>
+                    <div><strong>Location:</strong> {{ product.location }}</div>
+                    <div><strong>Price:</strong> £{{ product.price }}</div>
+                    <div><strong>Spaces:</strong> {{ product.spaces }}</div>
+                  </div>
+                  <div class="card-icon">
+                    <img :src="getImage(product.subject)" :alt="product.subject">
+                  </div>
                 </div>
-
-                <div class="card-icon">
-                  <img src="images/Basketball.png" alt="Basketball" />
-                </div>
+                
+                <button class="add-to-cart" v-on:click="addToCart(product)" :disabled="!canAddToCart(product)">
+                  Add to cart
+                </button>
               </div>
-
-              <button class="add-to-cart">Add to Cart</button>
             </div>
-
           </div>
         </div>
+      </div>
 
+      <!-- CHECKOUT PAGE -->
+      <div v-else>
+        <div class="checkout-page">
+          <h2>Checkout</h2>
+          
+          <div v-if="cartItemCount > 0">
+            <!-- Cart Items Display -->
+            <div class="cart-items">
+              <h3>Your Cart Items</h3>
+              <div v-for="item in cartItems" class="cart-item">
+                <img :src="getImage(item.product.subject)" :alt="item.product.subject" class="cart-item-image">
+                <div class="cart-item-info">
+                  <div><strong>{{ item.product.subject }}</strong></div>
+                  <div>Location: {{ item.product.location }}</div>
+                  <div>Quantity: {{ item.quantity }}</div>
+                </div>
+                <div class="cart-item-price">
+                  £{{ item.product.price * item.quantity }}
+                </div>
+              </div>
+              <div class="cart-total">
+                <strong>Total: £{{ cartTotal }}</strong>
+              </div>
+            </div>
+            
+            <div class="form-group">
+              <label>First Name:</label>
+              <input v-model="order.firstName" type="text"/>
+            </div>
+            
+            <div class="form-group">
+              <label>Last Name:</label>
+              <input v-model="order.lastName" type="text"/>
+            </div>
+            
+            <div class="form-group">
+              <label>Address:</label>
+              <input v-model="order.address" type="text"/>
+            </div>
+            
+            <div class="form-group">
+              <label>City:</label>
+              <input v-model="order.city" type="text"/>
+            </div>
+            
+            <div class="form-group">
+              <label>State:</label>
+              <select v-model="order.state">
+                <option disabled value="">Select State</option>
+                <option v-for="(state, key) in states" :value="state">
+                  {{ key }}
+                </option>
+              </select>
+            </div>
+            
+            <div class="form-group">
+              <label>Zip/Postal Code:</label>
+              <input v-model="order.zip" type="text"/>
+            </div>
+            
+            <div class="checkbox-group">
+              <input type="checkbox" id="gift" v-model="order.gift"/>
+              <label for="gift">This is a gift</label>
+            </div>
+            
+            <div class="radio-group">
+              <label style="display: block; margin-bottom: 10px; font-weight: 600;">Delivery Method:</label>
+              <div class="radio-inline">
+                <input type="radio" id="home" value="Home" v-model="order.method"/>
+                <label for="home">Home</label>
+              </div>
+              <div class="radio-inline">
+                <input type="radio" id="business" value="Business" v-model="order.method"/>
+                <label for="business">Business</label>
+              </div>
+            </div>
+            
+            <div class="order-summary">
+              <h3>Order Summary</h3>
+              <p><strong>First Name:</strong> {{ order.firstName }}</p>
+              <p><strong>Last Name:</strong> {{ order.lastName }}</p>
+              <p><strong>Address:</strong> {{ order.address }}</p>
+              <p><strong>City:</strong> {{ order.city }}</p>
+              <p><strong>State:</strong> {{ order.state }}</p>
+              <p><strong>Zip:</strong> {{ order.zip }}</p>
+              <p><strong>Delivery Method:</strong> {{ order.method }}</p>
+              <p><strong>Gift:</strong> {{ order.gift ? 'Yes' : 'No' }}</p>
+              <p><strong>Items in Cart:</strong> {{ cartItemCount }}</p>
+            </div>
+            
+            <div class="button-group">
+              <button class="btn-primary" v-on:click="submitForm">Place Order</button>
+              <button class="btn-secondary" v-on:click="toggleCheckout">Continue Shopping</button>
+            </div>
+          </div>
+          
+          <div v-else class="empty-cart">
+            <p style="font-size: 18px;">Your cart is empty</p>
+            <button class="btn-primary" v-on:click="toggleCheckout" style="margin-top: 20px;">Continue Shopping</button>
+          </div>
+        </div>
       </div>
     </main>
-
   </div>
 
-  <script src="app.js"></script>
+  <script type="text/javascript">
+    var webstore = new Vue({
+      el: '#app',
+      data: {
+        showProduct: true,
+        sortBy: 'price',
+        sortOrder: 'ascending',
+        products: products,
+        cart: [],
+        order: {
+          firstName: "",
+          lastName: "",
+          address: "",
+          city: "",
+          state: "",
+          zip: "",
+          method: 'Home',
+          gift: false
+        },
+        states: {
+          AL: "Alabama",
+          AR: "Arkansas",
+          CA: "California",
+          NV: "Nevada",
+          TX: "Texas",
+          FL: "Florida",
+          NY: "New York"
+        }
+      },
+      methods: {
+        addToCart: function (product) {
+          if (this.canAddToCart(product)) {
+            this.cart.push(product.id);
+          }
+        },
+        
+        canAddToCart: function (product) {
+          return product.spaces > this.cartCount(product.id);
+        },
+        
+        cartCount: function (id) {
+          let count = 0;
+          for (let i = 0; i < this.cart.length; i++) {
+            if (this.cart[i] === id) {
+              count++;
+            }
+          }
+          return count;
+        },
+        
+        getIcon: function (subject) {
+          if (subject === 'Math') return 'fa-solid fa-calculator';
+          if (subject === 'English') return 'fa-solid fa-pen';
+          if (subject === 'Music') return 'fa-solid fa-music';
+          return 'fa-solid fa-book';
+        },
+        
+        getImage: function (subject) {
+          return 'images/' + subject + '.png';
+        },
+        
+        toggleCheckout: function () {
+          this.showProduct = !this.showProduct;
+        },
+        
+        submitForm: function () {
+          alert("Order submitted successfully!");
+          this.cart = [];
+          this.showProduct = true;
+        }
+      },
+      computed: {
+        sortedProducts: function () {
+          let productsArray = this.products.slice(0);
+          let sortBy = this.sortBy;
+          let sortOrder = this.sortOrder;
+          
+          productsArray.sort(function (a, b) {
+            let comparison = 0;
+            
+            if (sortBy === 'subject') {
+              comparison = a.subject.localeCompare(b.subject);
+            } else if (sortBy === 'location') {
+              comparison = a.location.localeCompare(b.location);
+            } else if (sortBy === 'price') {
+              comparison = a.price - b.price;
+            } else if (sortBy === 'spaces') {
+              comparison = a.spaces - b.spaces;
+            }
+            
+            return sortOrder === 'ascending' ? comparison : -comparison;
+          });
+          
+          return productsArray;
+        },
+        
+        cartItemCount: function () {
+          return this.cart.length;
+        },
+        
+        cartItems: function () {
+          let items = {};
+          let vm = this;
+          
+          this.cart.forEach(function (id) {
+            if (items[id]) {
+              items[id].quantity++;
+            } else {
+              let product = vm.products.find(function (p) {
+                return p.id === id;
+              });
+              items[id] = {
+                product: product,
+                quantity: 1
+              };
+            }
+          });
+          
+          return Object.values(items);
+        },
+        
+        cartTotal: function () {
+          let total = 0;
+          this.cartItems.forEach(function (item) {
+            total += item.product.price * item.quantity;
+          });
+          return total;
+        }
+      }
+    });
+  </script>
 </body>
 </html>
