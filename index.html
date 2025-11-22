@@ -5,9 +5,60 @@
   <script src="https://unpkg.com/vue@2.7.8/dist/vue.js"></script>
   <link rel="stylesheet" href="styles.css">
 </head>
+
 <body>
   <div id="app">
-    <h1>After School Classes</h1>
+
+    <header>
+      <h1>After School Classes</h1>
+      <button class="checkout-btn">
+        0 <span class="cart-icon"></span>
+      </button>
+    </header>
+
+    <main>
+      <div class="container">
+
+        <!-- LEFT SIDEBAR -->
+        <div class="sidebar">
+          <h2>Search</h2>
+          <input type="text" class="search-box" placeholder="Search by subject or location">
+
+          <h2>Sort By</h2>
+          <label><input type="radio"> Subject</label>
+          <label><input type="radio"> Location</label>
+          <label><input type="radio"> Price</label>
+          <label><input type="radio"> Spaces</label>
+        </div>
+
+        <!-- RIGHT CONTENT: SAMPLE CARD -->
+        <div class="content">
+          <div class="cards-grid">
+
+            <!-- ⭐ Sample static card -->
+            <div class="card">
+              <div class="card-header">
+                <div class="card-info">
+                  <div><strong>Subject:</strong> Basketball</div>
+                  <div><strong>Location:</strong> Dubai</div>
+                  <div><strong>Price:</strong> £120</div>
+                  <div><strong>Spaces:</strong> 5</div>
+                </div>
+
+                <div class="card-icon">
+                  <img src="images/Basketball.png" alt="Basketball" />
+                </div>
+              </div>
+
+              <button class="add-to-cart">Add to Cart</button>
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+    </main>
+
   </div>
 
   <script src="app.js"></script>
