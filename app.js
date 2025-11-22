@@ -162,24 +162,63 @@ var webstore = new Vue({
       this.validateAllFields();
       
       if (this.isFormValid) {
-        alert("Order submitted successfully!");
-        this.cart = [];
-        this.order = {
-          firstName: "",
-          lastName: "",
-          address: "",
-          city: "",
-          state: "",
-          zip: "",
-          method: 'Home',
-          gift: false
+        // Prepare order data
+        const orderData = {
+          firstName: this.order.firstName,
+          lastName: this.order.lastName,
+          address: this.order.address,
+          city: this.order.city,
+          state: this.order.state,
+          zip: this.order.zip,
+          method: this.order.method,
+          gift: this.order.gift,
+          items: this.cartItems,
+          total: parseFloat(this.cartTotal),
+          orderDate: new Date().toISOString()
         };
-        this.resetErrors();
-        this.showProduct = true;
+        
+        // Save order to database
+        fetch('http://localhost:3000/collection/orders', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(orderData)
+        })
+        .then(response => response.json())
+        .then(data => {
+          console.log('Order saved:', data);
+          
+          // Update product spaces in database
+          this.updatelessonspaces();
+          
+          alert("Order submitted successfully!");
+          
+          // Reset cart and form
+          this.cart = [];
+          this.order = {
+            firstName: "",
+            lastName: "",
+            address: "",
+            city: "",
+            state: "",
+            zip: "",
+            method: 'Home',
+            gift: false
+          };
+          this.resetErrors();
+          this.showProduct = true;
+        })
+        .catch(error => {
+          console.error('Error submitting order:', error);
+          alert('Failed to submit order. Please try again.');
+        });
       } else {
         alert("Please fill in all required fields correctly");
       }
-    }
+    },
+
+    
   },
   computed: {
     sortedProducts: function () {
