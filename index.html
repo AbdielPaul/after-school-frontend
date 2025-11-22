@@ -18,7 +18,51 @@
     </header>
 
     <main>
-      
+      <!-- PRODUCT PAGE -->
+      <div v-if="showProduct">
+        <div class="container">
+          <!-- Sorting Options -->
+          <div class="sidebar">
+            <h2>Sort by</h2>
+            
+            <!-- What to sort by -->
+            <div class="sort-group">
+              <div class="radio-option">
+                <input type="radio" id="subject" value="subject" v-model="sortBy"/>
+                <label for="subject" :class="{ bold: sortBy === 'subject' }">Subject</label>
+              </div>
+              
+              <div class="radio-option">
+                <input type="radio" id="location" value="location" v-model="sortBy"/>
+                <label for="location" :class="{ bold: sortBy === 'location' }">Location</label>
+              </div>
+              
+              <div class="radio-option">
+                <input type="radio" id="price" value="price" v-model="sortBy"/>
+                <label for="price" :class="{ bold: sortBy === 'price' }">Price</label>
+              </div>
+              
+              <div class="radio-option">
+                <input type="radio" id="spaces" value="spaces" v-model="sortBy"/>
+                <label for="spaces" :class="{ bold: sortBy === 'spaces' }">Availability</label>
+              </div>
+            </div>
+            
+            <!-- How to sort (ascending/descending) -->
+            <div class="sort-group">
+              <div class="radio-option">
+                <input type="radio" id="ascending" value="ascending" v-model="sortOrder"/>
+                <label for="ascending" :class="{ bold: sortOrder === 'ascending' }">Ascending</label>
+              </div>
+              
+              <div class="radio-option">
+                <input type="radio" id="descending" value="descending" v-model="sortOrder"/>
+                <label for="descending" :class="{ bold: sortOrder === 'descending' }">Descending</label>
+              </div>
+            </div>
+          </div>
+
+          <!-- RIGHT SIDE: Class Cards -->
           <div class="content">
             <div class="cards-grid">
               <div v-for="product in sortedProducts" class="card">
