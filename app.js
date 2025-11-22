@@ -4,7 +4,7 @@ var webstore = new Vue({
     showProduct: true,
     sortBy: 'price',
     sortOrder: 'ascending',
-    products: products,
+    lessons: [],
     cart: [],
     searchQuery: '', // ✅ Added for search
     order: {
@@ -35,7 +35,26 @@ var webstore = new Vue({
       UmmAlQuwain: "Umm Al Quwain"
     }
   },
+
+  mounted: function() {
+    this.fetchlessons();
+  },
   methods: {
+
+    //  Fetch lessons from MongoDB
+    fetchlessons: function() {
+      fetch('http://localhost:3000/collection/lessons')
+        .then(response => response.json())
+        .then(data => {
+          this.lessons = data;
+          console.log('lessons loaded:', data);
+        })
+        .catch(error => {
+          console.error('Error fetching lessons:', error);
+          alert('Failed to load lessons. Please make sure the server is running.');
+        });
+    },
+
     addToCart: function (product) {
       if (this.canAddToCart(product)) {
         this.cart.push(product.id);
