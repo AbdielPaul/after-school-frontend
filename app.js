@@ -1,12 +1,12 @@
 var webstore = new Vue({
   el: '#app',
   data: {
-    showProduct: true,
+    showlesson: true,
     sortBy: 'price',
     sortOrder: 'ascending',
     lessons: [],
     cart: [],
-    searchQuery: '', // ✅ Added for search
+    searchQuery: '',
     order: {
       firstName: "",
       lastName: "",
@@ -35,13 +35,14 @@ var webstore = new Vue({
       UmmAlQuwain: "Umm Al Quwain"
     }
   },
-
+  
+  // ✅ Load lessons when page loads
   mounted: function() {
     this.fetchlessons();
   },
+  
   methods: {
-
-    //  Fetch lessons from MongoDB
+    // ✅ Fetch lessons from MongoDB
     fetchlessons: function() {
       fetch('http://localhost:3000/collection/lessons')
         .then(response => response.json())
@@ -55,19 +56,20 @@ var webstore = new Vue({
         });
     },
 
-    addToCart: function (product) {
-      if (this.canAddToCart(product)) {
-        this.cart.push(product.id);
+    addToCart: function (lesson) {
+      if (this.canAddToCart(lesson)) {
+        this.cart.push(lesson.id);
       }
     },
     
-    canAddToCart: function (product) {
-      return this.availableSpaces(product.id) > 0;
+    canAddToCart: function (lesson) {
+      return this.availableSpaces(lesson.id) > 0;
     },
     
     availableSpaces: function (id) {
-      let product = this.products.find(p => p.id === id);
-      return product.spaces - this.cartCount(id);
+      let lesson = this.lessons.find(p => p.id === id);
+      if (!lesson) return 0;
+      return lesson.spaces - this.cartCount(id);
     },
     
     cartCount: function (id) {
@@ -109,17 +111,16 @@ var webstore = new Vue({
     },
     
     getImage: function (subject) {
-      return 'images/' + subject + '.png';
+      return '/images/' + subject + '.png';
     },
     
     toggleCheckout: function () {
-      this.showProduct = !this.showProduct;
-      if (!this.showProduct) {
+      this.showlesson = !this.showlesson;
+      if (!this.showlesson) {
         this.resetErrors();
       }
     },
     
-    // ✅ Updated ZIP validation logic
     validateField: function (field) {
       if (!this.order[field] || this.order[field].trim() === '') {
         this.errors[field] = 'This field is required';
@@ -158,6 +159,7 @@ var webstore = new Vue({
       };
     },
     
+    // ✅ UPDATED: Submit order to database
     submitForm: function () {
       this.validateAllFields();
       
@@ -189,7 +191,7 @@ var webstore = new Vue({
         .then(data => {
           console.log('Order saved:', data);
           
-          // Update product spaces in database
+          // Update lesson spaces in database
           this.updatelessonspaces();
           
           alert("Order submitted successfully!");
@@ -207,7 +209,7 @@ var webstore = new Vue({
             gift: false
           };
           this.resetErrors();
-          this.showProduct = true;
+          this.showlesson = true;
         })
         .catch(error => {
           console.error('Error submitting order:', error);
@@ -217,14 +219,15 @@ var webstore = new Vue({
         alert("Please fill in all required fields correctly");
       }
     },
-
+    
+    // ✅ NEW: Update lesson spaces after order
     updatelessonspaces: function() {
       this.cartItems.forEach(item => {
-        const product = item.product;
-        const newSpaces = product.spaces - item.quantity;
+        const lesson = item.lesson;
+        const newSpaces = lesson.spaces - item.quantity;
         
         // Update in database
-        fetch(`http://localhost:3000/collection/lessons/${product._id}`, {
+        fetch(`http://localhost:3000/collection/lessons/${lesson._id}`, {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json'
@@ -233,28 +236,28 @@ var webstore = new Vue({
         })
         .then(response => response.json())
         .then(data => {
-          console.log('Product spaces updated:', data);
+          console.log('lesson spaces updated:', data);
           
-          // Update local product data
-          const localProduct = this.lessons.find(p => p.id === product.id);
-          if (localProduct) {
-            localProduct.spaces = newSpaces;
+          // Update local lesson data
+          const locallesson = this.lessons.find(p => p.id === lesson.id);
+          if (locallesson) {
+            locallesson.spaces = newSpaces;
           }
         })
         .catch(error => {
-          console.error('Error updating product spaces:', error);
+          console.error('Error updating lesson spaces:', error);
         });
       });
     }
-  
   },
+  
   computed: {
-    sortedProducts: function () {
-      let productsArray = this.products.slice(0);
+    sortedlessons: function () {
+      let lessonsArray = this.lessons.slice(0);
       let sortBy = this.sortBy;
       let sortOrder = this.sortOrder;
       
-      productsArray.sort(function (a, b) {
+      lessonsArray.sort(function (a, b) {
         let comparison = 0;
         
         if (sortBy === 'subject') {
@@ -270,19 +273,18 @@ var webstore = new Vue({
         return sortOrder === 'ascending' ? comparison : -comparison;
       });
       
-      return productsArray;
+      return lessonsArray;
     },
 
-    // ✅ Search filter functionality
-    filteredProducts: function () {
+    filteredlessons: function () {
       let query = this.searchQuery.trim().toLowerCase();
-      let sorted = this.sortedProducts;
+      let sorted = this.sortedlessons;
 
       if (!query) return sorted;
 
-      return sorted.filter(product =>
-        product.subject.toLowerCase().includes(query) ||
-        product.location.toLowerCase().includes(query)
+      return sorted.filter(lesson =>
+        lesson.subject.toLowerCase().includes(query) ||
+        lesson.location.toLowerCase().includes(query)
       );
     },
     
@@ -298,13 +300,15 @@ var webstore = new Vue({
         if (items[id]) {
           items[id].quantity++;
         } else {
-          let product = vm.products.find(function (p) {
+          let lesson = vm.lessons.find(function (p) {
             return p.id === id;
           });
-          items[id] = {
-            product: product,
-            quantity: 1
-          };
+          if (lesson) {
+            items[id] = {
+              lesson: lesson,
+              quantity: 1
+            };
+          }
         }
       });
       
@@ -314,7 +318,7 @@ var webstore = new Vue({
     cartTotal: function () {
       let total = 0;
       this.cartItems.forEach(function (item) {
-        total += item.product.price * item.quantity;
+        total += item.lesson.price * item.quantity;
       });
       return total.toFixed(2);
     },
@@ -327,7 +331,7 @@ var webstore = new Vue({
              this.order.state !== '' &&
              this.order.zip.trim() !== '' &&
              /^\d+$/.test(this.order.zip) &&
-             this.order.zip.length >= 5; // ✅ must be numeric & at least 5 digits
+             this.order.zip.length >= 5;
     }
   }
 });

@@ -18,8 +18,8 @@
     </header>
 
     <main>
-      <!-- PRODUCT PAGE -->
-      <div v-if="showProduct">
+      <!-- lesson PAGE -->
+      <div v-if="showlesson">
         <div class="container">
           <!-- LEFT SIDE: Sorting Options -->
           <div class="sidebar">
@@ -75,21 +75,21 @@
           <!-- RIGHT SIDE: Class Cards -->
           <div class="content">
             <div class="cards-grid">
-              <!--  UPDATED TO USE filteredProducts -->
-              <div v-for="product in filteredProducts" class="card">
+              <!--  UPDATED TO USE filteredlessons -->
+              <div v-for="lesson in filteredlessons" class="card">
                 <div class="card-header">
                   <div class="card-info">
-                    <div><strong>Subject:</strong> {{ product.subject }}</div>
-                    <div><strong>Location:</strong> {{ product.location }}</div>
-                    <div><strong>Price:</strong> £{{ product.price }}</div>
-                    <div><strong>Spaces:</strong> {{ availableSpaces(product.id) }}</div>
+                    <div><strong>Subject:</strong> {{ lesson.subject }}</div>
+                    <div><strong>Location:</strong> {{ lesson.location }}</div>
+                    <div><strong>Price:</strong> £{{ lesson.price }}</div>
+                    <div><strong>Spaces:</strong> {{ availableSpaces(lesson.id) }}</div>
                   </div>
                   <div class="card-icon">
-                    <img :src="getImage(product.subject)" :alt="product.subject">
+                    <img :src="getImage(lesson.subject)" :alt="lesson.subject">
                   </div>
                 </div>
                 
-                <button class="add-to-cart" v-on:click="addToCart(product)" :disabled="!canAddToCart(product)">
+                <button class="add-to-cart" v-on:click="addToCart(lesson)" :disabled="!canAddToCart(lesson)">
                   Add to cart
                 </button>
               </div>
@@ -108,20 +108,20 @@
             <div class="cart-items">
               <h3>Your Cart Items</h3>
               <div v-for="item in cartItems" class="cart-item">
-                <img :src="getImage(item.product.subject)" :alt="item.product.subject" class="cart-item-image">
+                <img :src="getImage(item.lesson.subject)" :alt="item.lesson.subject" class="cart-item-image">
                 <div class="cart-item-info">
-                  <div><strong>{{ item.product.subject }}</strong></div>
-                  <div>Location: {{ item.product.location }}</div>
-                  <div>Price per unit: £{{ item.product.price }}</div>
+                  <div><strong>{{ item.lesson.subject }}</strong></div>
+                  <div>Location: {{ item.lesson.location }}</div>
+                  <div>Price per unit: £{{ item.lesson.price }}</div>
                 </div>
                 <div class="quantity-controls">
-                  <button class="quantity-btn" v-on:click="decreaseQuantity(item.product.id)" :disabled="item.quantity <= 1">-</button>
+                  <button class="quantity-btn" v-on:click="decreaseQuantity(item.lesson.id)" :disabled="item.quantity <= 1">-</button>
                   <span class="quantity-display">{{ item.quantity }}</span>
-                  <button class="quantity-btn" v-on:click="increaseQuantity(item.product.id)" :disabled="!canIncreaseQuantity(item.product.id)">+</button>
+                  <button class="quantity-btn" v-on:click="increaseQuantity(item.lesson.id)" :disabled="!canIncreaseQuantity(item.lesson.id)">+</button>
                 </div>
-                <button class="remove-btn" v-on:click="removeFromCart(item.product.id)">Remove</button>
+                <button class="remove-btn" v-on:click="removeFromCart(item.lesson.id)">Remove</button>
                 <div class="cart-item-price">
-                  £{{ (item.product.price * item.quantity).toFixed(2) }}
+                  £{{ (item.lesson.price * item.quantity).toFixed(2) }}
                 </div>
               </div>
               <div class="cart-total">
