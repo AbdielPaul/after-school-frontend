@@ -1,16 +1,16 @@
+<!DOCTYPE html>
 <html>
 <head>
   <title>After School Classes</title>
   <script src="https://unpkg.com/vue@2.7.8/dist/vue.js"></script>
-  <script type="text/javascript" src="lessons.js"></script>
   <link href="https://cdn.jsdelivr.net/npm/font-awesome-bundled@6.7.2/all.min.css" rel="stylesheet">
-  <link rel="stylesheet" type="text/css" href="styles.css">
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
   <div id="app">
     <header>
       <h1>After School Classes</h1>
-      <button class="checkout-btn" v-on:click="toggleCheckout">
+      <button class="checkout-btn" v-on:click="toggleCheckout" v-if="cartItemCount > 0">
         <span>{{ cartItemCount }}</span>
         <span class="fa-solid fa-cart-shopping"></span>
         <span>Checkout</span>
@@ -21,8 +21,18 @@
       <!-- PRODUCT PAGE -->
       <div v-if="showProduct">
         <div class="container">
-          <!-- Sorting Options -->
+          <!-- LEFT SIDE: Sorting Options -->
           <div class="sidebar">
+
+            <!-- 🔍 SEARCH BOX -->
+            <h2>Search</h2>
+            <input
+              type="text"
+              v-model="searchQuery"
+              placeholder="Search by subject or location"
+              class="search-box"
+            />
+
             <h2>Sort by</h2>
             
             <!-- What to sort by -->
@@ -65,13 +75,14 @@
           <!-- RIGHT SIDE: Class Cards -->
           <div class="content">
             <div class="cards-grid">
-              <div v-for="product in sortedProducts" class="card">
+              <!--  UPDATED TO USE filteredProducts -->
+              <div v-for="product in filteredProducts" class="card">
                 <div class="card-header">
                   <div class="card-info">
                     <div><strong>Subject:</strong> {{ product.subject }}</div>
                     <div><strong>Location:</strong> {{ product.location }}</div>
                     <div><strong>Price:</strong> £{{ product.price }}</div>
-                    <div><strong>Spaces:</strong> {{ product.spaces }}</div>
+                    <div><strong>Spaces:</strong> {{ availableSpaces(product.id) }}</div>
                   </div>
                   <div class="card-icon">
                     <img :src="getImage(product.subject)" :alt="product.subject">
@@ -101,10 +112,16 @@
                 <div class="cart-item-info">
                   <div><strong>{{ item.product.subject }}</strong></div>
                   <div>Location: {{ item.product.location }}</div>
-                  <div>Quantity: {{ item.quantity }}</div>
+                  <div>Price per unit: £{{ item.product.price }}</div>
                 </div>
+                <div class="quantity-controls">
+                  <button class="quantity-btn" v-on:click="decreaseQuantity(item.product.id)" :disabled="item.quantity <= 1">-</button>
+                  <span class="quantity-display">{{ item.quantity }}</span>
+                  <button class="quantity-btn" v-on:click="increaseQuantity(item.product.id)" :disabled="!canIncreaseQuantity(item.product.id)">+</button>
+                </div>
+                <button class="remove-btn" v-on:click="removeFromCart(item.product.id)">Remove</button>
                 <div class="cart-item-price">
-                  £{{ item.product.price * item.quantity }}
+                  £{{ (item.product.price * item.quantity).toFixed(2) }}
                 </div>
               </div>
               <div class="cart-total">
@@ -113,38 +130,44 @@
             </div>
             
             <div class="form-group">
-              <label>First Name:</label>
-              <input v-model="order.firstName" type="text"/>
+              <label>First Name: <span style="color: red;">*</span></label>
+              <input v-model="order.firstName" type="text" :class="{ error: errors.firstName }" @blur="validateField('firstName')"/>
+              <div v-if="errors.firstName" class="error-message">{{ errors.firstName }}</div>
             </div>
             
             <div class="form-group">
-              <label>Last Name:</label>
-              <input v-model="order.lastName" type="text"/>
+              <label>Last Name: <span style="color: red;">*</span></label>
+              <input v-model="order.lastName" type="text" :class="{ error: errors.lastName }" @blur="validateField('lastName')"/>
+              <div v-if="errors.lastName" class="error-message">{{ errors.lastName }}</div>
             </div>
             
             <div class="form-group">
-              <label>Address:</label>
-              <input v-model="order.address" type="text"/>
+              <label>Address: <span style="color: red;">*</span></label>
+              <input v-model="order.address" type="text" :class="{ error: errors.address }" @blur="validateField('address')"/>
+              <div v-if="errors.address" class="error-message">{{ errors.address }}</div>
             </div>
             
             <div class="form-group">
-              <label>City:</label>
-              <input v-model="order.city" type="text"/>
+              <label>City: <span style="color: red;">*</span></label>
+              <input v-model="order.city" type="text" :class="{ error: errors.city }" @blur="validateField('city')"/>
+              <div v-if="errors.city" class="error-message">{{ errors.city }}</div>
             </div>
             
             <div class="form-group">
-              <label>State:</label>
-              <select v-model="order.state">
+              <label>State: <span style="color: red;">*</span></label>
+              <select v-model="order.state" :class="{ error: errors.state }" @blur="validateField('state')">
                 <option disabled value="">Select State</option>
                 <option v-for="(state, key) in states" :value="state">
                   {{ key }}
                 </option>
               </select>
+              <div v-if="errors.state" class="error-message">{{ errors.state }}</div>
             </div>
             
             <div class="form-group">
-              <label>Zip/Postal Code:</label>
-              <input v-model="order.zip" type="text"/>
+              <label>Zip/Postal Code: <span style="color: red;">*</span></label>
+              <input v-model="order.zip" type="text" :class="{ error: errors.zip }" @blur="validateField('zip')"/>
+              <div v-if="errors.zip" class="error-message">{{ errors.zip }}</div>
             </div>
             
             <div class="checkbox-group">
@@ -178,7 +201,7 @@
             </div>
             
             <div class="button-group">
-              <button class="btn-primary" v-on:click="submitForm">Place Order</button>
+              <button class="btn-primary" v-on:click="submitForm" :disabled="!isFormValid">Place Order</button>
               <button class="btn-secondary" v-on:click="toggleCheckout">Continue Shopping</button>
             </div>
           </div>
@@ -192,136 +215,7 @@
     </main>
   </div>
 
-  <script type="text/javascript">
-    var webstore = new Vue({
-      el: '#app',
-      data: {
-        showProduct: true,
-        sortBy: 'price',
-        sortOrder: 'ascending',
-        products: products,
-        cart: [],
-        order: {
-          firstName: "",
-          lastName: "",
-          address: "",
-          city: "",
-          state: "",
-          zip: "",
-          method: 'Home',
-          gift: false
-        },
-        states: {
-          AL: "Alabama",
-          AR: "Arkansas",
-          CA: "California",
-          NV: "Nevada",
-          TX: "Texas",
-          FL: "Florida",
-          NY: "New York"
-        }
-      },
-      methods: {
-        addToCart: function (product) {
-          if (this.canAddToCart(product)) {
-            this.cart.push(product.id);
-          }
-        },
-        
-        canAddToCart: function (product) {
-          return product.spaces > this.cartCount(product.id);
-        },
-        
-        cartCount: function (id) {
-          let count = 0;
-          for (let i = 0; i < this.cart.length; i++) {
-            if (this.cart[i] === id) {
-              count++;
-            }
-          }
-          return count;
-        },
-        
-        getIcon: function (subject) {
-          if (subject === 'Math') return 'fa-solid fa-calculator';
-          if (subject === 'English') return 'fa-solid fa-pen';
-          if (subject === 'Music') return 'fa-solid fa-music';
-          return 'fa-solid fa-book';
-        },
-        
-        getImage: function (subject) {
-          return 'images/' + subject + '.png';
-        },
-        
-        toggleCheckout: function () {
-          this.showProduct = !this.showProduct;
-        },
-        
-        submitForm: function () {
-          alert("Order submitted successfully!");
-          this.cart = [];
-          this.showProduct = true;
-        }
-      },
-      computed: {
-        sortedProducts: function () {
-          let productsArray = this.products.slice(0);
-          let sortBy = this.sortBy;
-          let sortOrder = this.sortOrder;
-          
-          productsArray.sort(function (a, b) {
-            let comparison = 0;
-            
-            if (sortBy === 'subject') {
-              comparison = a.subject.localeCompare(b.subject);
-            } else if (sortBy === 'location') {
-              comparison = a.location.localeCompare(b.location);
-            } else if (sortBy === 'price') {
-              comparison = a.price - b.price;
-            } else if (sortBy === 'spaces') {
-              comparison = a.spaces - b.spaces;
-            }
-            
-            return sortOrder === 'ascending' ? comparison : -comparison;
-          });
-          
-          return productsArray;
-        },
-        
-        cartItemCount: function () {
-          return this.cart.length;
-        },
-        
-        cartItems: function () {
-          let items = {};
-          let vm = this;
-          
-          this.cart.forEach(function (id) {
-            if (items[id]) {
-              items[id].quantity++;
-            } else {
-              let product = vm.products.find(function (p) {
-                return p.id === id;
-              });
-              items[id] = {
-                product: product,
-                quantity: 1
-              };
-            }
-          });
-          
-          return Object.values(items);
-        },
-        
-        cartTotal: function () {
-          let total = 0;
-          this.cartItems.forEach(function (item) {
-            total += item.product.price * item.quantity;
-          });
-          return total;
-        }
-      }
-    });
-  </script>
+  <script src="lessons.js"></script>
+  <script src="app.js"></script>
 </body>
 </html>
