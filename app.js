@@ -218,7 +218,35 @@ var webstore = new Vue({
       }
     },
 
-    
+    updatelessonspaces: function() {
+      this.cartItems.forEach(item => {
+        const product = item.product;
+        const newSpaces = product.spaces - item.quantity;
+        
+        // Update in database
+        fetch(`http://localhost:3000/collection/lessons/${product._id}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ spaces: newSpaces })
+        })
+        .then(response => response.json())
+        .then(data => {
+          console.log('Product spaces updated:', data);
+          
+          // Update local product data
+          const localProduct = this.lessons.find(p => p.id === product.id);
+          if (localProduct) {
+            localProduct.spaces = newSpaces;
+          }
+        })
+        .catch(error => {
+          console.error('Error updating product spaces:', error);
+        });
+      });
+    }
+  
   },
   computed: {
     sortedProducts: function () {
