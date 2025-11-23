@@ -85,7 +85,7 @@
                     <div><strong>Spaces:</strong> {{ availableSpaces(lesson.id) }}</div>
                   </div>
                   <div class="card-icon">
-                    <img :src="getImage(lesson.subject)" :alt="lesson.subject">
+                    <img :src="getImage(lesson)" :alt="lesson.subject">
                   </div>
                 </div>
                 
@@ -108,7 +108,7 @@
             <div class="cart-items">
               <h3>Your Cart Items</h3>
               <div v-for="item in cartItems" class="cart-item">
-                <img :src="getImage(item.lesson.subject)" :alt="item.lesson.subject" class="cart-item-image">
+                <img :src="getImage(item.lesson)" :alt="item.lesson.subject" class="cart-item-image">
                 <div class="cart-item-info">
                   <div><strong>{{ item.lesson.subject }}</strong></div>
                   <div>Location: {{ item.lesson.location }}</div>
@@ -215,7 +215,6 @@
     </main>
   </div>
 
-  <!-- <script src="lessons.js"></script> -->
   <script src="app.js"></script>
 </body>
 </html>

@@ -1,6 +1,9 @@
 var webstore = new Vue({
   el: '#app',
   data: {
+    // ✅ TODO: Update this to your deployed backend URL after deployment
+    apiUrl: 'https://week8-1-j6jp.onrender.com', // Change to 'https://your-backend-url.com' after deploying
+    
     showlesson: true,
     sortBy: 'price',
     sortOrder: 'ascending',
@@ -36,7 +39,6 @@ var webstore = new Vue({
     }
   },
   
-  // ✅ Load lessons when page loads
   mounted: function() {
     this.fetchlessons();
   },
@@ -44,15 +46,15 @@ var webstore = new Vue({
   methods: {
     // ✅ Fetch lessons from MongoDB
     fetchlessons: function() {
-      fetch('http://localhost:3000/collection/lessons')
+      fetch(`${this.apiUrl}/collection/lessons`)
         .then(response => response.json())
         .then(data => {
           this.lessons = data;
-          console.log('lessons loaded:', data);
+          console.log('Lessons loaded:', data);
         })
         .catch(error => {
           console.error('Error fetching lessons:', error);
-          alert('Failed to load lessons. Please make sure the server is running.');
+          alert('Failed to load lessons. Please check if the API server is running.');
         });
     },
 
@@ -110,8 +112,9 @@ var webstore = new Vue({
       return 'fa-solid fa-book';
     },
     
-    getImage: function (subject) {
-      return '/images/' + subject + '.png';
+    getImage: function (lesson) {
+      // ✅ Use the image path from the database
+      return lesson.image || './images/default.png';
     },
     
     toggleCheckout: function () {
@@ -159,12 +162,11 @@ var webstore = new Vue({
       };
     },
     
-    // ✅ UPDATED: Submit order to database
+    // ✅ Submit order to database
     submitForm: function () {
       this.validateAllFields();
       
       if (this.isFormValid) {
-        // Prepare order data
         const orderData = {
           firstName: this.order.firstName,
           lastName: this.order.lastName,
@@ -179,8 +181,7 @@ var webstore = new Vue({
           orderDate: new Date().toISOString()
         };
         
-        // Save order to database
-        fetch('http://localhost:3000/collection/orders', {
+        fetch(`${this.apiUrl}/collection/orders`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
@@ -190,10 +191,7 @@ var webstore = new Vue({
         .then(response => response.json())
         .then(data => {
           console.log('Order saved:', data);
-          
-          // Update lesson spaces in database
           this.updatelessonspaces();
-          
           alert("Order submitted successfully!");
           
           // Reset cart and form
@@ -220,14 +218,13 @@ var webstore = new Vue({
       }
     },
     
-    // ✅ NEW: Update lesson spaces after order
+    // ✅ Update lesson spaces after order
     updatelessonspaces: function() {
       this.cartItems.forEach(item => {
         const lesson = item.lesson;
         const newSpaces = lesson.spaces - item.quantity;
         
-        // Update in database
-        fetch(`http://localhost:3000/collection/lessons/${lesson._id}`, {
+        fetch(`${this.apiUrl}/collection/lessons/${lesson._id}`, {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json'
@@ -236,7 +233,7 @@ var webstore = new Vue({
         })
         .then(response => response.json())
         .then(data => {
-          console.log('lesson spaces updated:', data);
+          console.log('Lesson spaces updated:', data);
           
           // Update local lesson data
           const locallesson = this.lessons.find(p => p.id === lesson.id);
