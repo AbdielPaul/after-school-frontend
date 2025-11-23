@@ -1,8 +1,8 @@
 var webstore = new Vue({
   el: '#app',
   data: {
-    // ✅ TODO: Update this to your deployed backend URL after deployment
-    apiUrl: 'https://week8-1-j6jp.onrender.com', // Change to 'https://your-backend-url.com' after deploying
+    //URL of the API server
+    apiUrl: 'https://after-school-backend-by7k.onrender.com', 
     
     showlesson: true,
     sortBy: 'price',
@@ -44,7 +44,7 @@ var webstore = new Vue({
   },
   
   methods: {
-    // ✅ Fetch lessons from MongoDB
+    // Fetch lessons from MongoDB
     fetchlessons: function() {
       fetch(`${this.apiUrl}/collection/lessons`)
         .then(response => response.json())
@@ -113,7 +113,7 @@ var webstore = new Vue({
     },
     
     getImage: function (lesson) {
-      // ✅ Use the image path from the database
+      //  Use the image path from the database
       return lesson.image || './images/default.png';
     },
     
@@ -162,7 +162,7 @@ var webstore = new Vue({
       };
     },
     
-    // ✅ Submit order to database
+    //  Submit order to database
     submitForm: function () {
       this.validateAllFields();
       
@@ -218,7 +218,7 @@ var webstore = new Vue({
       }
     },
     
-    // ✅ Update lesson spaces after order
+    // Update lesson spaces after order
     updatelessonspaces: function() {
       this.cartItems.forEach(item => {
         const lesson = item.lesson;
