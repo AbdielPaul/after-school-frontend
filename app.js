@@ -2,7 +2,7 @@ var webstore = new Vue({
   el: '#app',
   data: {
     //URL of the API server
-    apiUrl: 'http://localhost:3000', 
+    apiUrl: 'https://after-school-backend-by7k.onrender.com', 
     
     showlesson: true,
     sortBy: 'price',
