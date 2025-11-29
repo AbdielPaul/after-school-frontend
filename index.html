@@ -8,23 +8,22 @@
 </head>
 <body>
   <div id="app">
-    <header>
-      <h1>After School Classes</h1>
-      <button class="checkout-btn" v-on:click="toggleCheckout" v-if="cartItemCount > 0">
-        <span>{{ cartItemCount }}</span>
-        <span class="fa-solid fa-cart-shopping"></span>
-        <span>Checkout</span>
-      </button>
-    </header>
+  <header>
+    <h1>After School Classes</h1>
 
+    <button class="checkout-btn" v-on:click="toggleCheckout" v-if="cartItemCount > 0">
+      <span>{{ cartItemCount }}</span>
+      <span class="fa-solid fa-cart-shopping"></span>
+      <span>{{ buttonText }}</span>
+    </button>
+  </header>
     <main>
       <!-- lesson PAGE -->
       <div v-if="showlesson">
         <div class="container">
           <!-- LEFT SIDE: Sorting Options -->
           <div class="sidebar">
-
-            <!-- 🔍 SEARCH BOX -->
+            <!-- SEARCH BOX -->
             <h2>Search</h2>
             <input
               type="text"
@@ -75,18 +74,18 @@
           <!-- RIGHT SIDE: Class Cards -->
           <div class="content">
             <div class="cards-grid">
-              <!--  UPDATED TO USE filteredlessons -->
               <div v-for="lesson in filteredlessons" class="card">
-                <div class="card-header">
-                  <div class="card-info">
-                    <div><strong>Subject:</strong> {{ lesson.subject }}</div>
-                    <div><strong>Location:</strong> {{ lesson.location }}</div>
-                    <div><strong>Price:</strong> £{{ lesson.price }}</div>
-                    <div><strong>Spaces:</strong> {{ availableSpaces(lesson.id) }}</div>
-                  </div>
-                  <div class="card-icon">
-                    <img :src="getImage(lesson)" :alt="lesson.subject">
-                  </div>
+                <div class="card-title">{{ lesson.subject }}</div>
+                
+                <div class="card-image">
+                  <img :src="getImage(lesson)" :alt="lesson.subject">
+                </div>
+                
+                <div class="card-price">£{{ lesson.price }}</div>
+                
+                <div class="card-details">
+                  <div><strong>Location:</strong> {{ lesson.location }}</div>
+                  <div><strong>Spaces:</strong> {{ availableSpaces(lesson.id) }}</div>
                 </div>
                 
                 <button class="add-to-cart" v-on:click="addToCart(lesson)" :disabled="!canAddToCart(lesson)">

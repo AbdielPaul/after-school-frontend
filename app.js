@@ -2,14 +2,16 @@ var webstore = new Vue({
   el: '#app',
   data: {
     //URL of the API server
-    apiUrl: 'https://after-school-backend-by7k.onrender.com', 
+    apiUrl: 'http://localhost:3000', 
     
     showlesson: true,
     sortBy: 'price',
     sortOrder: 'ascending',
     lessons: [],
+    searchResults: [], // Store search results separately
     cart: [],
     searchQuery: '',
+    isSearching: false, // Track if a search is in progress
     order: {
       firstName: "",
       lastName: "",
@@ -43,6 +45,18 @@ var webstore = new Vue({
     this.fetchlessons();
   },
   
+  watch: {
+    // Watch for changes in searchQuery and trigger API search
+    searchQuery: function(newQuery) {
+      if (newQuery.trim() === '') {
+        this.searchResults = [];
+        this.isSearching = false;
+      } else {
+        this.performSearch(newQuery);
+      }
+    }
+  },
+  
   methods: {
     // Fetch lessons from MongoDB
     fetchlessons: function() {
@@ -55,6 +69,22 @@ var webstore = new Vue({
         .catch(error => {
           console.error('Error fetching lessons:', error);
           alert('Failed to load lessons. Please check if the API server is running.');
+        });
+    },
+
+    // Perform search using the API
+    performSearch: function(query) {
+      this.isSearching = true;
+      fetch(`${this.apiUrl}/search/lessons?q=${encodeURIComponent(query)}`)
+        .then(response => response.json())
+        .then(data => {
+          this.searchResults = data;
+          this.isSearching = false;
+          console.log('Search results:', data);
+        })
+        .catch(error => {
+          console.error('Error searching lessons:', error);
+          this.isSearching = false;
         });
     },
 
@@ -125,22 +155,49 @@ var webstore = new Vue({
     },
     
     validateField: function (field) {
-      if (!this.order[field] || this.order[field].trim() === '') {
-        this.errors[field] = 'This field is required';
-      } else {
-        if (field === 'zip') {
-          if (!/^\d+$/.test(this.order.zip)) {
-            this.errors.zip = 'Zip code must contain only numbers';
-          } else if (this.order.zip.length < 5) {
-            this.errors.zip = 'Zip code must be at least 5 digits';
-          } else {
-            this.errors.zip = '';
-          }
-        } else {
-          this.errors[field] = '';
-        }
-      }
-    },
+  const value = this.order[field].trim();
+
+  // Check empty
+  if (!value) {
+    this.errors[field] = 'This field is required';
+    return;
+  }
+
+  // Name fields – letters only
+  if (field === 'firstName' || field === 'lastName') {
+    if (!/^[A-Za-z\s]+$/.test(value)) {
+      this.errors[field] = 'Only letters are allowed';
+    } else {
+      this.errors[field] = '';
+    }
+    return;
+  }
+
+  // City – letters only
+  if (field === 'city') {
+    if (!/^[A-Za-z\s]+$/.test(value)) {
+      this.errors.city = 'City must contain only letters';
+    } else {
+      this.errors.city = '';
+    }
+    return;
+  }
+
+  // ZIP – numbers only
+  if (field === 'zip') {
+    if (!/^\d+$/.test(value)) {
+      this.errors.zip = 'Zip code must contain only numbers';
+    } else if (value.length < 5) {
+      this.errors.zip = 'Zip code must be at least 5 digits';
+    } else {
+      this.errors.zip = '';
+    }
+    return;
+  }
+
+  // Default — no special rule
+  this.errors[field] = '';
+},
     
     validateAllFields: function () {
       this.validateField('firstName');
@@ -249,6 +306,9 @@ var webstore = new Vue({
   },
   
   computed: {
+    buttonText() {
+      return this.showlesson ? "Checkout" : "Home";
+    },
     sortedlessons: function () {
       let lessonsArray = this.lessons.slice(0);
       let sortBy = this.sortBy;
@@ -273,16 +333,37 @@ var webstore = new Vue({
       return lessonsArray;
     },
 
+    // Use search results from API when searching, otherwise use sorted lessons
     filteredlessons: function () {
-      let query = this.searchQuery.trim().toLowerCase();
-      let sorted = this.sortedlessons;
+      let query = this.searchQuery.trim();
 
-      if (!query) return sorted;
+      // If no search query, return sorted lessons
+      if (!query) {
+        return this.sortedlessons;
+      }
 
-      return sorted.filter(lesson =>
-        lesson.subject.toLowerCase().includes(query) ||
-        lesson.location.toLowerCase().includes(query)
-      );
+      // If searching, return search results 
+      let results = this.searchResults.slice(0);
+      let sortBy = this.sortBy;
+      let sortOrder = this.sortOrder;
+      
+      results.sort(function (a, b) {
+        let comparison = 0;
+        
+        if (sortBy === 'subject') {
+          comparison = a.subject.localeCompare(b.subject);
+        } else if (sortBy === 'location') {
+          comparison = a.location.localeCompare(b.location);
+        } else if (sortBy === 'price') {
+          comparison = a.price - b.price;
+        } else if (sortBy === 'spaces') {
+          comparison = a.spaces - b.spaces;
+        }
+        
+        return sortOrder === 'ascending' ? comparison : -comparison;
+      });
+      
+      return results;
     },
     
     cartItemCount: function () {
@@ -321,14 +402,21 @@ var webstore = new Vue({
     },
     
     isFormValid: function () {
-      return this.order.firstName.trim() !== '' &&
-             this.order.lastName.trim() !== '' &&
-             this.order.address.trim() !== '' &&
-             this.order.city.trim() !== '' &&
-             this.order.state !== '' &&
-             this.order.zip.trim() !== '' &&
-             /^\d+$/.test(this.order.zip) &&
-             this.order.zip.length >= 5;
+      return (
+        this.errors.firstName === '' &&
+        this.errors.lastName === '' &&
+        this.errors.address === '' &&
+        this.errors.city === '' &&
+        this.errors.state === '' &&
+        this.errors.zip === '' &&
+        this.order.firstName.trim() !== '' &&
+        this.order.lastName.trim() !== '' &&
+        this.order.address.trim() !== '' &&
+        this.order.city.trim() !== '' &&
+        this.order.state !== '' &&
+        this.order.zip.trim() !== ''
+      );
     }
+
   }
 });

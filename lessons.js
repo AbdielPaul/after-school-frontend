@@ -13,7 +13,7 @@ let products = [
     "subject": "Basketball",
     "location": "Sports City",
     "price": 15.50,
-    "image": "images/Basketball.png",
+    "image": "images/basketball.png",
     "spaces": 7,
     "rating": 4
   },
