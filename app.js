@@ -1,17 +1,17 @@
 var webstore = new Vue({
   el: '#app',
   data: {
-    //URL of the API server
-    apiUrl: 'https://after-school-backend-by7k.onrender.com', 
-    
+    // URL of the API server
+    apiUrl: 'http://localhost:3000',
+
     showlesson: true,
     sortBy: 'price',
     sortOrder: 'ascending',
     lessons: [],
-    searchResults: [], // Store search results separately
+    searchResults: [],
     cart: [],
     searchQuery: '',
-    isSearching: false, // Track if a search is in progress
+    isSearching: false,
     order: {
       firstName: "",
       lastName: "",
@@ -40,14 +40,13 @@ var webstore = new Vue({
       UmmAlQuwain: "Umm Al Quwain"
     }
   },
-  
-  mounted: function() {
+
+  mounted: function () {
     this.fetchlessons();
   },
-  
+
   watch: {
-    // Watch for changes in searchQuery and trigger API search
-    searchQuery: function(newQuery) {
+    searchQuery: function (newQuery) {
       if (newQuery.trim() === '') {
         this.searchResults = [];
         this.isSearching = false;
@@ -56,10 +55,10 @@ var webstore = new Vue({
       }
     }
   },
-  
+
   methods: {
     // Fetch lessons from MongoDB
-    fetchlessons: function() {
+    fetchlessons: function () {
       fetch(`${this.apiUrl}/collection/lessons`)
         .then(response => response.json())
         .then(data => {
@@ -73,7 +72,7 @@ var webstore = new Vue({
     },
 
     // Perform search using the API
-    performSearch: function(query) {
+    performSearch: function (query) {
       this.isSearching = true;
       fetch(`${this.apiUrl}/search/lessons?q=${encodeURIComponent(query)}`)
         .then(response => response.json())
@@ -93,17 +92,17 @@ var webstore = new Vue({
         this.cart.push(lesson.id);
       }
     },
-    
+
     canAddToCart: function (lesson) {
       return this.availableSpaces(lesson.id) > 0;
     },
-    
+
     availableSpaces: function (id) {
       let lesson = this.lessons.find(p => p.id === id);
       if (!lesson) return 0;
       return lesson.spaces - this.cartCount(id);
     },
-    
+
     cartCount: function (id) {
       let count = 0;
       for (let i = 0; i < this.cart.length; i++) {
@@ -113,92 +112,90 @@ var webstore = new Vue({
       }
       return count;
     },
-    
+
     increaseQuantity: function (id) {
       if (this.canIncreaseQuantity(id)) {
         this.cart.push(id);
       }
     },
-    
+
     decreaseQuantity: function (id) {
       let index = this.cart.indexOf(id);
       if (index > -1) {
         this.cart.splice(index, 1);
       }
     },
-    
+
     removeFromCart: function (id) {
       this.cart = this.cart.filter(itemId => itemId !== id);
     },
-    
+
     canIncreaseQuantity: function (id) {
       return this.availableSpaces(id) > 0;
     },
-    
+
     getIcon: function (subject) {
       if (subject === 'Math') return 'fa-solid fa-calculator';
       if (subject === 'English') return 'fa-solid fa-pen';
       if (subject === 'Music') return 'fa-solid fa-music';
       return 'fa-solid fa-book';
     },
-    
+
+    // LOAD IMAGES FROM BACKEND SERVER
     getImage: function (lesson) {
-      //  Use the image path from the database
-      return lesson.image || './images/default.png';
+      if (lesson.image) {
+        return `${this.apiUrl}/images/${lesson.image.replace(/^images\//, '')}`;
+      }
+      return `${this.apiUrl}/images/default.png`;
     },
-    
+
     toggleCheckout: function () {
       this.showlesson = !this.showlesson;
       if (!this.showlesson) {
         this.resetErrors();
       }
     },
-    
+
     validateField: function (field) {
-  const value = this.order[field].trim();
+      const value = this.order[field].trim();
 
-  // Check empty
-  if (!value) {
-    this.errors[field] = 'This field is required';
-    return;
-  }
+      if (!value) {
+        this.errors[field] = 'This field is required';
+        return;
+      }
 
-  // Name fields – letters only
-  if (field === 'firstName' || field === 'lastName') {
-    if (!/^[A-Za-z\s]+$/.test(value)) {
-      this.errors[field] = 'Only letters are allowed';
-    } else {
+      if (field === 'firstName' || field === 'lastName') {
+        if (!/^[A-Za-z\s]+$/.test(value)) {
+          this.errors[field] = 'Only letters are allowed';
+        } else {
+          this.errors[field] = '';
+        }
+        return;
+      }
+
+      if (field === 'city') {
+        if (!/^[A-Za-z\s]+$/.test(value)) {
+          this.errors.city = 'City must contain only letters';
+        } else {
+          this.errors.city = '';
+        }
+        return;
+      }
+
+      if (field === 'zip') {
+        if (!/^\d+$/.test(value)) {
+          this.errors.zip = 'Zip code must contain only numbers';
+        } else if (value.length < 5) {
+          this.errors.zip = 'Zip code must be at least 5 digits';
+        } else {
+          this.errors.zip = '';
+        }
+        return;
+      }
+
       this.errors[field] = '';
-    }
-    return;
-  }
+    },
 
-  // City – letters only
-  if (field === 'city') {
-    if (!/^[A-Za-z\s]+$/.test(value)) {
-      this.errors.city = 'City must contain only letters';
-    } else {
-      this.errors.city = '';
-    }
-    return;
-  }
-
-  // ZIP – numbers only
-  if (field === 'zip') {
-    if (!/^\d+$/.test(value)) {
-      this.errors.zip = 'Zip code must contain only numbers';
-    } else if (value.length < 5) {
-      this.errors.zip = 'Zip code must be at least 5 digits';
-    } else {
-      this.errors.zip = '';
-    }
-    return;
-  }
-
-  // Default — no special rule
-  this.errors[field] = '';
-},
-    
     validateAllFields: function () {
       this.validateField('firstName');
       this.validateField('lastName');
@@ -207,7 +204,7 @@ var webstore = new Vue({
       this.validateField('state');
       this.validateField('zip');
     },
-    
+
     resetErrors: function () {
       this.errors = {
         firstName: '',
@@ -218,11 +215,10 @@ var webstore = new Vue({
         zip: ''
       };
     },
-    
-    //  Submit order to database
+
     submitForm: function () {
       this.validateAllFields();
-      
+
       if (this.isFormValid) {
         const orderData = {
           firstName: this.order.firstName,
@@ -237,86 +233,81 @@ var webstore = new Vue({
           total: parseFloat(this.cartTotal),
           orderDate: new Date().toISOString()
         };
-        
+
         fetch(`${this.apiUrl}/collection/orders`, {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(orderData)
         })
-        .then(response => response.json())
-        .then(data => {
-          console.log('Order saved:', data);
-          this.updatelessonspaces();
-          alert("Order submitted successfully!");
-          
-          // Reset cart and form
-          this.cart = [];
-          this.order = {
-            firstName: "",
-            lastName: "",
-            address: "",
-            city: "",
-            state: "",
-            zip: "",
-            method: 'Home',
-            gift: false
-          };
-          this.resetErrors();
-          this.showlesson = true;
-        })
-        .catch(error => {
-          console.error('Error submitting order:', error);
-          alert('Failed to submit order. Please try again.');
-        });
+          .then(response => response.json())
+          .then(data => {
+            console.log('Order saved:', data);
+            this.updatelessonspaces();
+            alert("Order submitted successfully!");
+
+            this.cart = [];
+            this.order = {
+              firstName: "",
+              lastName: "",
+              address: "",
+              city: "",
+              state: "",
+              zip: "",
+              method: 'Home',
+              gift: false
+            };
+            this.resetErrors();
+            this.showlesson = true;
+          })
+          .catch(error => {
+            console.error('Error submitting order:', error);
+            alert('Failed to submit order. Please try again.');
+          });
       } else {
         alert("Please fill in all required fields correctly");
       }
     },
-    
+
     // Update lesson spaces after order
-    updatelessonspaces: function() {
+    updatelessonspaces: function () {
       this.cartItems.forEach(item => {
         const lesson = item.lesson;
         const newSpaces = lesson.spaces - item.quantity;
-        
+
         fetch(`${this.apiUrl}/collection/lessons/${lesson._id}`, {
           method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json'
-          },
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ spaces: newSpaces })
         })
-        .then(response => response.json())
-        .then(data => {
-          console.log('Lesson spaces updated:', data);
-          
-          // Update local lesson data
-          const locallesson = this.lessons.find(p => p.id === lesson.id);
-          if (locallesson) {
-            locallesson.spaces = newSpaces;
-          }
-        })
-        .catch(error => {
-          console.error('Error updating lesson spaces:', error);
-        });
+          .then(response => response.json())
+          .then(data => {
+            console.log('Lesson spaces updated:', data);
+
+            const locallesson = this.lessons.find(p => p.id === lesson.id);
+            if (locallesson) {
+              locallesson.spaces = newSpaces;
+            }
+          })
+          .catch(error => {
+            console.error('Error updating lesson spaces:', error);
+          });
       });
     }
   },
-  
+
   computed: {
     buttonText() {
       return this.showlesson ? "Checkout" : "Home";
     },
+
     sortedlessons: function () {
       let lessonsArray = this.lessons.slice(0);
       let sortBy = this.sortBy;
       let sortOrder = this.sortOrder;
-      
+
       lessonsArray.sort(function (a, b) {
         let comparison = 0;
-        
+
         if (sortBy === 'subject') {
           comparison = a.subject.localeCompare(b.subject);
         } else if (sortBy === 'location') {
@@ -326,30 +317,25 @@ var webstore = new Vue({
         } else if (sortBy === 'spaces') {
           comparison = a.spaces - b.spaces;
         }
-        
+
         return sortOrder === 'ascending' ? comparison : -comparison;
       });
-      
+
       return lessonsArray;
     },
 
-    // Use search results from API when searching, otherwise use sorted lessons
     filteredlessons: function () {
       let query = this.searchQuery.trim();
 
-      // If no search query, return sorted lessons
-      if (!query) {
-        return this.sortedlessons;
-      }
+      if (!query) return this.sortedlessons;
 
-      // If searching, return search results 
       let results = this.searchResults.slice(0);
       let sortBy = this.sortBy;
       let sortOrder = this.sortOrder;
-      
+
       results.sort(function (a, b) {
         let comparison = 0;
-        
+
         if (sortBy === 'subject') {
           comparison = a.subject.localeCompare(b.subject);
         } else if (sortBy === 'location') {
@@ -359,21 +345,21 @@ var webstore = new Vue({
         } else if (sortBy === 'spaces') {
           comparison = a.spaces - b.spaces;
         }
-        
+
         return sortOrder === 'ascending' ? comparison : -comparison;
       });
-      
+
       return results;
     },
-    
+
     cartItemCount: function () {
       return this.cart.length;
     },
-    
+
     cartItems: function () {
       let items = {};
       let vm = this;
-      
+
       this.cart.forEach(function (id) {
         if (items[id]) {
           items[id].quantity++;
@@ -389,10 +375,10 @@ var webstore = new Vue({
           }
         }
       });
-      
+
       return Object.values(items);
     },
-    
+
     cartTotal: function () {
       let total = 0;
       this.cartItems.forEach(function (item) {
@@ -400,7 +386,7 @@ var webstore = new Vue({
       });
       return total.toFixed(2);
     },
-    
+
     isFormValid: function () {
       return (
         this.errors.firstName === '' &&
@@ -417,6 +403,5 @@ var webstore = new Vue({
         this.order.zip.trim() !== ''
       );
     }
-
   }
 });
