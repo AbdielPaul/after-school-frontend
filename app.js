@@ -15,6 +15,7 @@ var webstore = new Vue({
     order: {
       firstName: "",
       lastName: "",
+      phone: "",
       address: "",
       city: "",
       state: "",
@@ -25,6 +26,7 @@ var webstore = new Vue({
     errors: {
       firstName: '',
       lastName: '',
+      phone: '',
       address: '',
       city: '',
       state: '',
@@ -173,6 +175,19 @@ var webstore = new Vue({
         return;
       }
 
+      if (field === 'phone') {
+        // Remove all non-digit characters for validation
+        const digitsOnly = value.replace(/\D/g, '');
+        if (digitsOnly.length < 10) {
+          this.errors.phone = 'Phone number must be at least 10 digits';
+        } else if (!/^[\d\s\-\+\(\)]+$/.test(value)) {
+          this.errors.phone = 'Invalid phone number format';
+        } else {
+          this.errors.phone = '';
+        }
+        return;
+      }
+
       if (field === 'city') {
         if (!/^[A-Za-z\s]+$/.test(value)) {
           this.errors.city = 'City must contain only letters';
@@ -199,6 +214,7 @@ var webstore = new Vue({
     validateAllFields: function () {
       this.validateField('firstName');
       this.validateField('lastName');
+      this.validateField('phone');     
       this.validateField('address');
       this.validateField('city');
       this.validateField('state');
@@ -209,6 +225,7 @@ var webstore = new Vue({
       this.errors = {
         firstName: '',
         lastName: '',
+        phone: '',
         address: '',
         city: '',
         state: '',
@@ -223,6 +240,7 @@ var webstore = new Vue({
         const orderData = {
           firstName: this.order.firstName,
           lastName: this.order.lastName,
+          phone: this.order.phone,
           address: this.order.address,
           city: this.order.city,
           state: this.order.state,
@@ -249,6 +267,7 @@ var webstore = new Vue({
             this.order = {
               firstName: "",
               lastName: "",
+              phone: "",
               address: "",
               city: "",
               state: "",
@@ -391,6 +410,7 @@ var webstore = new Vue({
       return (
         this.errors.firstName === '' &&
         this.errors.lastName === '' &&
+        this.errors.phone === '' &&
         this.errors.address === '' &&
         this.errors.city === '' &&
         this.errors.state === '' &&
